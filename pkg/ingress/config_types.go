@@ -1,6 +1,9 @@
 package ingress
 
 import (
+	"net/http"
+	"os"
+
 	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -410,7 +413,52 @@ type AuthIDPConfigOIDC struct {
 	// The k8s secretName.
 	SecretName string `json:"secretName"`
 
+	// The OIDC discovery endpoint of the IdP.
+	// +optional
+	DiscoveryEndpoint string `json:"discoveryEndpoint,omitempty"`
 	// The query parameters (up to 10) to include in the redirect request to the authorization endpoint.
 	// +optional
 	AuthenticationRequestExtraParams map[string]string `json:"authenticationRequestExtraParams,omitempty"`
+}
+
+func (a *AuthIDPConfigOIDC) init() {
+	if a.DiscoveryEndpoint == "" {
+		return
+	}
+
+	if a.getInfoFromDiscoveryUrl() != nil {
+
+	}
+}
+
+func (a *AuthIDPConfigOIDC) getInfoFromDiscoveryUrl() error {
+	// http.Get(a.DiscoveryEndpoint)
+	request()
+	if a.Issuer == "" {
+		return errors.New("missing Issuer")
+	}
+	if a.AuthorizationEndpoint == "" {
+		return errors.New("missing AuthorizationEndpoint")
+	}
+	if a.TokenEndpoint == "" {
+		return errors.New("missing TokenEndpoint")
+	}
+	if a.UserInfoEndpoint == "" {
+		return errors.New("missing UserInfoEndpoint")
+	}
+
+	return nil
+}
+
+type DiscoveryEndpointResponse struct {
+}
+
+func request(url string) (*DiscoveryEndpointResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		// fmt.Printf("client: could not create request: %s\n", err)
+		os.Exit(1)
+		return nil, errors.New("get info error")
+	}
+	return
 }

@@ -179,6 +179,37 @@ func Test_defaultAuthConfigBuilder_Build(t *testing.T) {
 				SessionTimeout:           86400,
 			},
 		},
+		{
+			name: "oidc auth annotation - with discovery endpoint",
+			args: args{
+				svcAndIngAnnotations: map[string]string{
+					"alb.ingress.kubernetes.io/auth-type":                       "oidc",
+					"alb.ingress.kubernetes.io/auth-idp-oidc":                   `{"discoveryEndpoint":"https://example.com/.well-known/openid-configuration","SecretName":"my-k8s-secret","AuthenticationRequestExtraParams":{"key":"value"}}`,
+					"alb.ingress.kubernetes.io/auth-on-unauthenticated-request": "deny",
+					"alb.ingress.kubernetes.io/auth-scope":                      "email",
+					"alb.ingress.kubernetes.io/auth-session-cookie":             "my-cookie",
+					"alb.ingress.kubernetes.io/auth-session-timeout":            "86400",
+				},
+			},
+			want: AuthConfig{
+				Type: AuthTypeOIDC,
+				IDPConfigOIDC: &AuthIDPConfigOIDC{
+					DiscoveryEndpoint: "https://example.com/.well-known/openid-configuration",
+					// Issuer:                "https://example.com",
+					// AuthorizationEndpoint: "https://authorization.example.com",
+					// TokenEndpoint:         "https://token.example.com",
+					// UserInfoEndpoint:      "https://userinfo.example.com",
+					SecretName: "my-k8s-secret",
+					AuthenticationRequestExtraParams: map[string]string{
+						"key": "value",
+					},
+				},
+				OnUnauthenticatedRequest: "deny",
+				Scope:                    "email",
+				SessionCookieName:        "my-cookie",
+				SessionTimeout:           86400,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
